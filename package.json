@@ -7,7 +7,7 @@
 	},
 	"scripts": {
 		"start": "bun run src/index.ts",
-		"build": "bun build --compile --outfile=dist/pocket-updates src/index.ts"
+		"build": "bun build --compile --outfile=bin/pocket-updates src/index.ts"
 	},
 	"dependencies": {
 		"@clack/prompts": "^0.8.2",
