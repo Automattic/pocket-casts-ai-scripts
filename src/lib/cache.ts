@@ -6,7 +6,7 @@ export class Cache {
 	private cacheDir: string;
 
 	constructor() {
-		this.cacheDir = join(homedir(), ".cache", "sprint-update");
+		this.cacheDir = join(homedir(), ".cache", "thursday-updates");
 		if (!existsSync(this.cacheDir)) {
 			mkdirSync(this.cacheDir, { recursive: true });
 		}

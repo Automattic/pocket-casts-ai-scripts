@@ -1,17 +1,17 @@
 import { getRepo } from "@/lib/github/octokit";
 import { getPullRequests } from "@/lib/github/pull-requests";
-import { formatReport } from "@/workflow/sprint-update/format-report";
+import { formatReport } from "@/workflow/thursday-updates/format-report";
 import { getProjectThreads } from "@/lib/wpcom/posts";
 import type { PostWithComments } from "@/lib/wpcom/types";
-import { summarizeProjectThreads } from "@/workflow/sprint-update/ai-summarize-project-threads";
+import { summarizeProjectThreads } from "@/workflow/thursday-updates/ai-summarize-project-threads";
 import {
 	type PullRequestWithSummary,
 	summarizePullRequests,
-} from "@/workflow/sprint-update/ai-summarize-pull-requests";
-import { getTeamPRs } from "@/workflow/sprint-update/get-team-prs";
-import { aiReportTopShipped } from "@/workflow/sprint-update/ai-report-top-shipped";
+} from "@/workflow/thursday-updates/ai-summarize-pull-requests";
+import { getTeamPRs } from "@/workflow/thursday-updates/get-team-prs";
+import { aiReportTopShipped } from "@/workflow/thursday-updates/ai-report-top-shipped";
 import ora from "ora";
-import { formatProjectUpdates } from "@/workflow/sprint-update/format-project-updates";
+import { formatProjectUpdates } from "@/workflow/thursday-updates/format-project-updates";
 
 export type ProgressStep = {
 	step: number;

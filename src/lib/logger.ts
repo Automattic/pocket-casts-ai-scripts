@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { args } from "../index";
+import { args } from "./utilities";
 
 export type LogLevel = "debug" | "verbose" | "info" | "warn" | "error";
 
