@@ -1,5 +1,5 @@
 import { openai } from "@/lib/ai/presets";
-import { PostWithComments } from "@/lib/wpcom/types";
+import type { PostWithComments } from "@/lib/wpcom/types";
 import { htmlToMarkdown } from "@/lib/utilities";
 import pMap from "p-map";
 import { v } from "@/lib/ai/nchain";

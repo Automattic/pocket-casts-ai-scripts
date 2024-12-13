@@ -1,4 +1,4 @@
-import { ProjectThreadWithSummary } from "./ai-summarize-project-threads";
+import type { ProjectThreadWithSummary } from "./ai-summarize-project-threads";
 
 function formatProjectUpdates(
 	projectThreads: ProjectThreadWithSummary[],

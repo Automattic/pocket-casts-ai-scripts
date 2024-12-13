@@ -1,5 +1,5 @@
 import { openai } from "@/lib/ai/presets";
-import { PullRequestWithSummary } from "./ai-summarize-pull-requests";
+import type { PullRequestWithSummary } from "./ai-summarize-pull-requests";
 
 const examples = [
 	`On web we implemented Up Next queue sorting and released the Up Next shuffle feature.`,

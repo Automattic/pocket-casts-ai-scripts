@@ -1,4 +1,4 @@
-import { Require } from "../wpcom/types";
+import type { Require } from "../wpcom/types";
 import { getOctokit } from "./octokit";
 import type { Repository } from "./octokit";
 import type { Endpoints } from "@octokit/types";

@@ -3,6 +3,9 @@ import chalk from "chalk";
 import { getThursdayUpdates } from "./workflow/sprint-update/hooks/get-thursday-updates";
 import { getPreferences } from "./preferences";
 import { getOAuthTokens, authorize } from "./lib/oauth";
+import { copyAsRichText, copyText } from "./lib/utilities";
+import { marked } from 'marked';
+import { select } from '@clack/prompts';
 
 interface CliOptions {
 	debug?: boolean;
@@ -63,6 +66,30 @@ async function validateConfig() {
 	}
 }
 
+export async function askForCopyPreference(content: string): Promise<void> {
+	const choice = await select({
+		message: 'Would you like to copy the report?',
+		options: [
+			{ label: 'Copy as rich text (HTML)', value: 'rich' },
+			{ label: 'Copy as markdown', value: 'markdown' },
+			{ label: 'Don\'t copy', value: 'none' }
+		],
+	});
+
+	if (choice === 'rich') {
+		marked.setOptions({
+			gfm: true,
+			breaks: true,
+		});
+		const html = await marked.parse(content);
+		await copyAsRichText({ html, text: content });
+		console.log("Report copied as rich text!");
+	} else if (choice === 'markdown') {
+		await copyText(content);
+		console.log("Report copied as markdown!");
+	}
+}
+
 async function main() {
 	const argv = minimist<CliOptions>(process.argv.slice(2));
 
@@ -81,6 +108,9 @@ async function main() {
 
 		const report = await getThursdayUpdates({ startDate, endDate });
 		console.log(report);
+
+		await askForCopyPreference(report);
+
 	} catch (error) {
 		console.error(
 			chalk.red("Error:"),
@@ -90,4 +120,4 @@ async function main() {
 	}
 }
 
-main().catch(console.error);
+await main();

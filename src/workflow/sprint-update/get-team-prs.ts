@@ -1,4 +1,4 @@
-import { PullRequestWithSummary } from "./ai-summarize-pull-requests";
+import type { PullRequestWithSummary } from "./ai-summarize-pull-requests";
 import { formatPRLink } from "./utilities";
 
 function formatTeamUpdates(team: string, prs: PullRequestWithSummary[]): string {

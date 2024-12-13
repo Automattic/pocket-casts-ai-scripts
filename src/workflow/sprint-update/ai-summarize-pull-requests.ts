@@ -1,6 +1,6 @@
 import { openai } from "@/lib/ai/presets";
 import pMap from "p-map";
-import { components } from "@octokit/openapi-types";
+import type { components } from "@octokit/openapi-types";
 import { v } from "@/lib/ai/nchain";
 
 export type PullRequestWithSummary = Awaited<

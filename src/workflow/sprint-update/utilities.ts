@@ -1,4 +1,4 @@
-import { PullRequestWithSummary } from "./ai-summarize-pull-requests";
+import { type PullRequestWithSummary } from "./ai-summarize-pull-requests";
 
 export function formatPRLink(pr: PullRequestWithSummary): string {
 	let status = "Opened";
@@ -7,3 +7,4 @@ export function formatPRLink(pr: PullRequestWithSummary): string {
 	}
 	return `${status}: [${pr.title}](${pr.html_url})`;
 }
+
