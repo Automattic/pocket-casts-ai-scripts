@@ -3,7 +3,7 @@ import { getThursdayUpdates } from "./workflow/thursday-updates/get-thursday-upd
 import { getPreferences } from "./preferences";
 import { getOAuthTokens, authorize } from "./lib/oauth";
 import { getGitHubTokenSetupInstructions } from "./lib/github/setup-instructions";
-
+import { askForCopyPreference, args } from './lib/utilities';
 
 function showHelp() {
 	console.log(`
