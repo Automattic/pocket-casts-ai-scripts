@@ -1,8 +1,8 @@
 import type { ProjectThreadWithSummary } from "./ai-summarize-project-threads";
 
-function formatProjectUpdates(
+export async function formatProjectUpdates(
 	projectThreads: ProjectThreadWithSummary[],
-): string {
+): Promise<string> {
 	const sections: string[] = [];
 
 	for (const thread of projectThreads) {
@@ -17,10 +17,4 @@ function formatProjectUpdates(
 	}
 
 	return sections.join("\n\n");
-}
-
-export async function getProjectUpdateReport(
-	projectThreads: ProjectThreadWithSummary[],
-): Promise<string> {
-	return formatProjectUpdates(projectThreads);
 }

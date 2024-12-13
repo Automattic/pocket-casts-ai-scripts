@@ -1,18 +1,17 @@
-import { getRepo } from "../../../lib/github/octokit";
-import { getPullRequests } from "../../../lib/github/pull-requests";
-import { formatReport } from "../format-report";
+import { getRepo } from "@/lib/github/octokit";
+import { getPullRequests } from "@/lib/github/pull-requests";
+import { formatReport } from "@/workflow/sprint-update/format-report";
 import { getProjectThreads } from "@/lib/wpcom/posts";
 import type { PostWithComments } from "@/lib/wpcom/types";
-import { summarizeProjectThreads } from "../ai-summarize-project-threads";
+import { summarizeProjectThreads } from "@/workflow/sprint-update/ai-summarize-project-threads";
 import {
 	type PullRequestWithSummary,
 	summarizePullRequests,
-} from "../ai-summarize-pull-requests";
-import { getTeamPRs } from "../get-team-prs";
-import { getProjectUpdateReport } from "../get-project-updates";
-import { aiReportTopShipped } from "../ai-report-top-shipped";
+} from "@/workflow/sprint-update/ai-summarize-pull-requests";
+import { getTeamPRs } from "@/workflow/sprint-update/get-team-prs";
+import { aiReportTopShipped } from "@/workflow/sprint-update/ai-report-top-shipped";
 import ora from "ora";
-import chalk from "chalk";
+import { formatProjectUpdates } from "@/workflow/sprint-update/format-project-updates";
 
 export type ProgressStep = {
 	step: number;
@@ -123,7 +122,7 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 		const projectThreads = await summarizeProjectThreads(projectThreadsRaw);
 
 		spinner.text = "Generating Project Updates...";
-		const projectUpdates = await getProjectUpdateReport(projectThreads);
+		const projectUpdates = await formatProjectUpdates(projectThreads);
 
 		spinner.text = "Processing Pull Requests...";
 		const pullRequests = await pullRequestsPromise;
