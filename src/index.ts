@@ -118,6 +118,7 @@ async function main() {
 		console.log(report);
 
 		await askForCopyPreference(report);
+		process.exit(0);
 	} catch (error) {
 		console.error(
 			chalk.red("Error:"),
