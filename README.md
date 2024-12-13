@@ -1,15 +1,38 @@
-# pocket-scripts
+# Pocket Scripts
 
-To install dependencies:
+## Setup
 
-```bash
-bun install
-```
+### Bin Files
 
-To run:
+If you just want to run the thursday updates script, you can execute the `bin` file directly:
 
 ```bash
-bun run src/index.ts
+bin/pocket-updates
 ```
 
-This project was created using `bun init` in bun v1.1.37. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+```sh
+Usage: sprint-update [options]
+
+Options:
+  --debug    Enable debug logging
+  --verbose  Enable verbose logging
+  --from     Start date (YYYY-MM-DD)
+  --to       End date (YYYY-MM-DD)
+  --help     Show this help message
+```
+
+### Development
+
+For development, you'll need to install [Bun.sh](https://bun.sh/) runtime.
+
+Run the thursday updates script:
+
+```bash
+bun run start
+```
+
+Build the thursday updates script into the `bin` directory:
+
+```bash
+bun run build
+```
