@@ -4,6 +4,7 @@ import { getPullRequest } from "./pull-requests";
 import { getIssue } from "./issues";
 import type { Repository } from "./octokit";
 import type { Endpoints } from "@octokit/types";
+import { logger } from "../logger";
 
 type FileContent = {
 	content: string;
@@ -39,9 +40,7 @@ async function fetchFile(
 		throw new Error("Path and branch are required for file content");
 	}
 
-	console.log(
-		`[GitHub API] Fetching file content from ${owner}/${repo}: ${path}`,
-	);
+	logger().info(`[GitHub API] Fetching content from ${owner}/${repo}/${path}`);
 	const { data } = await octokit.rest.repos.getContent({
 		owner,
 		repo,

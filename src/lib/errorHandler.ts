@@ -1,5 +1,6 @@
 import { showToast, Toast } from "@raycast/api";
 import { useEffect, useState } from "react";
+import { logger } from "./logger";
 
 export function useErrorHandler() {
 	const [error, setError] = useState<Error>();
@@ -22,7 +23,7 @@ function maybeExplainError(message: string): {
 	title: string;
 	message: string;
 } {
-	console.error(message);
+	logger().error(message);
 	if (message.includes("reason: connect ECONNREFUSED")) {
 		return {
 			title: "ECONNREFUSED",

@@ -1,6 +1,7 @@
-import { Require } from "../wpcom/types";
+import { type Require } from "../wpcom/types";
 import { getOctokit, type Repository } from "./octokit";
-import { components } from "@octokit/openapi-types";
+import { type components } from "@octokit/openapi-types";
+import { logger } from "../logger";
 
 type PullRequestComment =
 	components["schemas"]["pull-request-review-comment"];
@@ -15,9 +16,7 @@ export async function getPullRequest(
 ) {
 	const octokit = await getOctokit();
 	try {
-		console.log(
-			`[GitHub API] Fetching PR #${meta.number} from ${meta.owner}/${meta.repo}`,
-		);
+		logger().info(`[GitHub API] Fetching PR #${meta.number} from ${meta.owner}/${meta.repo}`);
 		const { data } = await octokit.rest.pulls.get({
 			owner: meta.owner,
 			repo: meta.repo,
@@ -115,15 +114,13 @@ export async function getPullRequests(
 		}));
 
 		const repoCount = repositories.length;
-		console.log(
-			`[GitHub API] Found ${results.length} PRs from ${repoCount} repositories`,
-		);
+		logger().info(`[GitHub API] Found ${results.length} PRs from ${repoCount} repositories`);
 
-		console.log("Merged PR numbers:", [...mergedPRNumbers]);
+		logger().debug("Merged PR numbers:", [...mergedPRNumbers]);
 
 		return results;
 	} catch (error) {
-		console.error(`[GitHub API] Error searching PRs:`, error);
+		logger().error(`[GitHub API] Error searching PRs:`, error);
 		throw error;
 	}
 }

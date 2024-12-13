@@ -104,8 +104,11 @@ async function getProjectThreadRange(
 }
 
 export const getThursdayUpdates = async (dateRange: DateRange) => {
-	const spinner = ora("Starting Pull Request Collection").start();
-
+	const spinner = ora({
+		text: "Starting Pull Request Collection",
+		isSilent: false,
+		isEnabled: process.stdout.isTTY,
+	}).start();
 	try {
 		spinner.text = `Gathering data from ${Object.values(repositorySources).flat().length} repositories...`;
 		const pullRequestsPromise = getPullRequestsByTeam(dateRange);

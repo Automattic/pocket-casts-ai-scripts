@@ -1,4 +1,5 @@
 import { Cache } from "@raycast/api";
+import { logger } from "./logger";
 
 export interface CachedItem {
 	/**
@@ -33,7 +34,7 @@ export class CachedItems {
 	}
 
 	public update(label: string, data: string) {
-		console.log("Updating cache with", label, data);
+		logger().debug("Updating cache with", label, data);
 		// delete existing
 		this.data = this.data.filter((entry) => entry.data !== data);
 		this.data.unshift({ label, data: data });

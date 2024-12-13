@@ -10,6 +10,7 @@ import type {
 	SearchResult,
 } from "./types";
 import { autocache } from "../utilities";
+import { logger } from "../logger";
 
 export async function wpcomRequest<T>(
 	path: string | URL,
@@ -40,8 +41,8 @@ export async function wpcomRequest<T>(
 
 	if (!response.ok) {
 		const text = await response.text();
-		console.error(`Failed to fetch "${url}": ${response.statusText}`);
-		console.error("WPCOM: ", text);
+		logger().error(`Failed to fetch "${url}": ${response.statusText}`);
+		logger().error("WPCOM: ", text);
 		throw new Error(text || response.statusText);
 	}
 
@@ -61,7 +62,7 @@ export async function mgs(
 	query: string,
 	sortBy: SearchSortBy = SearchSortBy.Relevance,
 ): Promise<SearchResult[]> {
-	console.log("Searching for: " + query);
+	logger().info("Searching for: " + query);
 
 	const search = await wpcomRequest<MGS_Response>(
 		`rest/v1.1/internal/search`,
@@ -95,7 +96,7 @@ export async function mgs(
 		};
 	});
 
-	console.log(`Returned ${results.length} for ${query}`);
+	logger().info(`Returned ${results.length} for ${query}`);
 
 	if (sortBy === SearchSortBy.Relevance) {
 		return results;

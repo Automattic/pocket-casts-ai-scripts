@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { args } from "../index";
 
 export type LogLevel = "debug" | "verbose" | "info" | "warn" | "error";
 
@@ -13,26 +14,29 @@ class Logger {
 
 	debug(...args: unknown[]) {
 		if (this.debugEnabled) {
-			console.log(chalk.gray("[DEBUG]"), ...args);
+			console.log("\n" + chalk.gray("[DEBUG]"), ...args, "\n");
 		}
 	}
 
 	verbose(...args: unknown[]) {
 		if (this.verboseEnabled) {
-			console.log(chalk.blue("[VERBOSE]"), ...args);
+			console.log("\n" + chalk.blue("[VERBOSE]"), ...args, "\n");
 		}
 	}
 
 	info(...args: unknown[]) {
-		console.log(chalk.green("[INFO]"), ...args);
+		if (!this.debugEnabled && !this.verboseEnabled) {
+			return;
+		}
+		console.log("\n" + chalk.green("[INFO]"), ...args, "\n");
 	}
 
 	warn(...args: unknown[]) {
-		console.warn(chalk.yellow("[WARN]"), ...args);
+		console.warn("\n" + chalk.yellow("[WARN]"), ...args, "\n");
 	}
 
 	error(...args: unknown[]) {
-		console.error(chalk.red("[ERROR]"), ...args);
+		console.error("\n" + chalk.red("[ERROR]"), ...args, "\n");
 	}
 }
 
@@ -42,9 +46,12 @@ export function initLogger(options: { debug?: boolean; verbose?: boolean }) {
 	instance = new Logger(options);
 }
 
-export function getLogger(): Logger {
+export function logger(): Logger {
 	if (!instance) {
-		instance = new Logger({ debug: false, verbose: false });
+		instance = new Logger({
+			debug: !!args().debug,
+			verbose: !!args().verbose,
+		});
 	}
 	return instance;
 }

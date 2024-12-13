@@ -93,8 +93,13 @@ export async function askForCopyPreference(content: string): Promise<void> {
 	}
 }
 
-async function main() {
+export function args() {
 	const argv = minimist<CliOptions>(process.argv.slice(2));
+	return argv;
+}
+
+async function main() {
+	const argv = args();
 
 	if (argv.help) {
 		showHelp();

@@ -2,6 +2,7 @@ import type { Require } from "../wpcom/types";
 import { getOctokit } from "./octokit";
 import type { Repository } from "./octokit";
 import type { Endpoints } from "@octokit/types";
+import { logger } from "../logger";
 
 type Issue =
 	Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]["data"];
@@ -24,7 +25,7 @@ export async function getIssue(
 ): Promise<Issue | null> {
 	const octokit = await getOctokit();
 	try {
-		console.log(
+		logger().info(
 			`[GitHub API] Fetching issue #${meta.number} from ${meta.owner}/${meta.repo}`,
 		);
 		const { data } = await octokit.rest.issues.get({
@@ -72,7 +73,7 @@ export async function getIssues(
 
 	const stateQuery = state === "all" ? "" : `is:${state}`;
 	const query = `is:issue repo:${meta.owner}/${meta.repo} ${dateQuery} ${stateQuery}`.trim();
-	console.log(`[GitHub API] Query: ${query}`);
+	logger().info(`[GitHub API] Query: ${query}`);
 
 	try {
 		const { data } = await octokit.search.issuesAndPullRequests({
@@ -82,13 +83,13 @@ export async function getIssues(
 			per_page: 100,
 		});
 
-		console.log(
+		logger().info(
 			`[GitHub API] Found ${data.items.length} issues from ${meta.owner}/${meta.repo}`,
 		);
 
 		return data.items as Issue[];
 	} catch (error) {
-		console.error(`[GitHub API] Error searching issues:`, error);
+		logger().error(`[GitHub API] Error searching issues:`, error);
 		throw error;
 	}
 }

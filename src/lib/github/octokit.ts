@@ -4,6 +4,7 @@ import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import fetch from "node-fetch";
 import type { Require } from "../wpcom/types";
+import { logger } from "../logger";
 
 // Extended interface for parsed GitHub URLs
 export type Repository = {
@@ -137,9 +138,7 @@ export async function getOctokit() {
 		},
 		throttle: {
 			onRateLimit: async (retryAfter, options, octokit, retryCount) => {
-				console.log(
-					`[GitHub API] Rate limit reached for ${options.method} ${options.url}. ${retryCount < 2 ? `Retrying in ${retryAfter}s...` : "Max retries reached."}`,
-				);
+				logger().info(`[GitHub API] Rate limit reached for ${options.method} ${options.url}. ${retryCount < 2 ? `Retrying in ${retryAfter}s...` : "Max retries reached."}`);
 				if (retryCount < 2) {
 					await new Promise((resolve) =>
 						setTimeout(resolve, retryAfter * 1000),
@@ -149,9 +148,7 @@ export async function getOctokit() {
 				return false;
 			},
 			onSecondaryRateLimit: async (retryAfter, options) => {
-				console.log(
-					`[GitHub API] Secondary rate limit for ${options.method} ${options.url}. Retrying in ${retryAfter}s...`,
-				);
+				logger().info(`[GitHub API] Secondary rate limit for ${options.method} ${options.url}. Retrying in ${retryAfter}s...`);
 				await new Promise((resolve) =>
 					setTimeout(resolve, retryAfter * 1000),
 				);

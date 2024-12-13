@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws";
+import { logger } from "../../../logger";
 
 export type WebSocketMessage = {
 	name: string;
@@ -18,21 +19,19 @@ export class WSServer {
 
 	public start() {
 		if (this.started) {
-			console.warn("Debug WebSocket server already started");
+			logger().warn("Debug WebSocket server already started");
 			return;
 		}
 		this.started = true;
 		this.wss.on("connection", (ws) => {
-			console.log("Debug client connected");
+			logger().info("Debug client connected");
 			this.clients.add(ws);
 
 			ws.on("close", () => {
 				this.clients.delete(ws);
 			});
 		});
-		console.log(
-			`AI Debug WebSocket server listening on ws://localhost:${this.port}`,
-		);
+		logger().info("Debug WebSocket server started on port", this.port);
 	}
 
 	static getInstance(port: number = 1414): WSServer {
