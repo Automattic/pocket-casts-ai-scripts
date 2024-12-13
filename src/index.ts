@@ -1,6 +1,6 @@
 import minimist from "minimist";
 import chalk from "chalk";
-import { getThursdayUpdates } from "./workflow/sprint-update/hooks/get-thursday-updates";
+import { getThursdayUpdates } from "./workflow/sprint-update/get-thursday-updates";
 import { getPreferences } from "./preferences";
 import { getOAuthTokens, authorize } from "./lib/oauth";
 import { copyAsRichText, copyText } from "./lib/utilities";
