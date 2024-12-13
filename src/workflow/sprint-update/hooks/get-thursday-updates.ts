@@ -2,15 +2,17 @@ import { getRepo } from "../../../lib/github/octokit";
 import { getPullRequests } from "../../../lib/github/pull-requests";
 import { formatReport } from "../format-report";
 import { getProjectThreads } from "@/lib/wpcom/posts";
-import { PostWithComments } from "@/lib/wpcom/types";
+import type { PostWithComments } from "@/lib/wpcom/types";
 import { summarizeProjectThreads } from "../ai-summarize-project-threads";
 import {
-	PullRequestWithSummary,
+	type PullRequestWithSummary,
 	summarizePullRequests,
 } from "../ai-summarize-pull-requests";
 import { getTeamPRs } from "../get-team-prs";
 import { getProjectUpdateReport } from "../get-project-updates";
 import { aiReportTopShipped } from "../ai-report-top-shipped";
+import ora from "ora";
+import chalk from "chalk";
 
 export type ProgressStep = {
 	step: number;
@@ -56,8 +58,7 @@ const fetchPRs = async (sources: string[], dateRange: DateRange) => {
 
 	return prs.sort(
 		(a, b) =>
-			new Date(b.updated_at).getTime() -
-			new Date(a.updated_at).getTime(),
+			new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
 	);
 };
 
@@ -88,100 +89,61 @@ async function getProjectThreadRange(
 ): Promise<PostWithComments[]> {
 	const projectThreads = await getProjectThreads(p2, { dateRange });
 
-	return projectThreads
-		.map((thread) => {
-			return {
-				...thread,
-				comments: thread.comments?.filter((comment) => {
-					const commentDate = new Date(comment.date_gmt);
-					return (
-						commentDate.getTime() >= dateRange.startDate.getTime() &&
-						commentDate.getTime() <= dateRange.endDate.getTime()
-					);
-				}),
-			};
-		});
+	return projectThreads.map((thread) => {
+		return {
+			...thread,
+			comments: thread.comments?.filter((comment) => {
+				const commentDate = new Date(comment.date_gmt);
+				return (
+					commentDate.getTime() >= dateRange.startDate.getTime() &&
+					commentDate.getTime() <= dateRange.endDate.getTime()
+				);
+			}),
+		};
+	});
 }
 
-export const getThursdayUpdates = async (
-	dateRange: DateRange,
-	onProgress: (progress: ProgressStep) => void,
-) => {
-	onProgress({
-		step: 1,
-		totalSteps: 8,
-		message: "Starting Pull Request Collection",
-		detail: `Gathering data from ${Object.values(repositorySources).flat().length} repositories...`,
-	});
-	const pullRequestsPromise = getPullRequestsByTeam(dateRange);
+export const getThursdayUpdates = async (dateRange: DateRange) => {
+	const spinner = ora("Starting Pull Request Collection").start();
 
-	onProgress({
-		step: 2,
-		totalSteps: 8,
-		message: "Fetching Project Threads",
-		detail: "Getting updates from Pocket Casts P2...",
-	});
-	const projectThreadsRaw = await getProjectThreadRange(
-		"pocketcastsp2",
-		dateRange,
-	);
+	try {
+		spinner.text = `Gathering data from ${Object.values(repositorySources).flat().length} repositories...`;
+		const pullRequestsPromise = getPullRequestsByTeam(dateRange);
 
-	onProgress({
-		step: 3,
-		totalSteps: 8,
-		message: "Analyzing Project Threads",
-		detail: "Summarizing P2 discussions...",
-	});
-	const projectThreads = await summarizeProjectThreads(projectThreadsRaw);
+		spinner.text = "Fetching Project Threads from Pocket Casts P2...";
+		const projectThreadsRaw = await getProjectThreadRange(
+			"pocketcastsp2",
+			dateRange,
+		);
 
-	onProgress({
-		step: 4,
-		totalSteps: 8,
-		message: "Generating Project Updates",
-		detail: "Creating summaries of project activities...",
-	});
-	const projectUpdates = await getProjectUpdateReport(projectThreads);
+		spinner.text = "Analyzing Project Threads...";
+		const projectThreads = await summarizeProjectThreads(projectThreadsRaw);
 
-	onProgress({
-		step: 5,
-		totalSteps: 8,
-		message: "Processing Pull Requests",
-		detail: "Analyzing collected pull requests...",
-	});
-	const pullRequests = await pullRequestsPromise;
+		spinner.text = "Generating Project Updates...";
+		const projectUpdates = await getProjectUpdateReport(projectThreads);
 
-	onProgress({
-		step: 6,
-		totalSteps: 8,
-		message: "Generating Team Updates",
-		detail: "Creating team activity summaries...",
-	});
-	const teamPullRequests = await getTeamPRs(pullRequests);
+		spinner.text = "Processing Pull Requests...";
+		const pullRequests = await pullRequestsPromise;
 
-	onProgress({
-		step: 7,
-		totalSteps: 8,
-		message: "Collecting Shipped Features",
-		detail: "Analyzing recently shipped features...",
-	});
-	const topShipped = await aiReportTopShipped(
-		projectUpdates,
-		pullRequests.flatMap((p) => p.pullRequests),
-	);
+		spinner.text = "Generating Team Updates...";
+		const teamPullRequests = await getTeamPRs(pullRequests);
 
-	const report = formatReport({
-		topShipped,
-		projectUpdates,
-		teamUpdates: teamPullRequests,
-	});
+		spinner.text = "Analyzing recently shipped features...";
+		const topShipped = await aiReportTopShipped(
+			projectUpdates,
+			pullRequests.flatMap((p) => p.pullRequests),
+		);
 
-	onProgress({
-		step: 8,
-		totalSteps: 8,
-		message: "Complete",
-		detail: "Report ready!",
-		isComplete: true,
-	});
+		const report = formatReport({
+			topShipped,
+			projectUpdates,
+			teamUpdates: teamPullRequests,
+		});
 
-	return report;
+		spinner.succeed("Report generated successfully!");
+		return report;
+	} catch (error) {
+		spinner.fail("Failed to generate report");
+		throw error;
+	}
 };

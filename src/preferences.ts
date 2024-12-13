@@ -1,6 +1,6 @@
-import { getPreferenceValues } from "@raycast/api";
-import { WSServer } from './lib/ai/nchain/debugger/ws-server';
-import { useEffect } from 'react';
+import { existsSync, readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 
 interface Preferences {
 	autoproxxy: string;
@@ -8,12 +8,12 @@ interface Preferences {
 	GITHUB_TOKEN: string;
 }
 
-export const getPreferences = (): Preferences => getPreferenceValues<Preferences>();
+const CONFIG_FILE = join(homedir(), ".config", "sprint-update", "config.json");
 
-export const maybeUseDebug = () => {
-	useEffect(() => {
-		if (getPreferences().debug) {
-			WSServer.getInstance().start();
-		}
-	}, []);
-};
+export function getPreferences(): Preferences {
+	return {
+		autoproxxy: Bun.env.autoproxxy || "socks5h://localhost:5555",
+		debug: Bun.env.debug === "true",
+		GITHUB_TOKEN: Bun.env.GITHUB_TOKEN || "",
+	};
+}

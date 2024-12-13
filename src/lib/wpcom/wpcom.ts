@@ -1,4 +1,3 @@
-import { popToRoot } from "@raycast/api";
 import fetch from "node-fetch";
 import { SocksProxyAgent } from "socks-proxy-agent";
 import { getPreferences } from "../../preferences";
@@ -22,7 +21,6 @@ export async function wpcomRequest<T>(
 
 	if (!tokenSet) {
 		await authorize();
-		await popToRoot();
 	}
 
 	// If an URL object is passed, convert it to a string

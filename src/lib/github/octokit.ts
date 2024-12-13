@@ -1,13 +1,9 @@
-import { getPreferenceValues } from "@raycast/api";
+import { getPreferences } from "../../preferences";
 import { Octokit } from "@octokit/rest";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import fetch from "node-fetch";
-import { Require } from "../wpcom/types";
-
-interface Preferences {
-	GITHUB_TOKEN: string;
-}
+import type { Require } from "../wpcom/types";
 
 // Extended interface for parsed GitHub URLs
 export type Repository = {
@@ -35,9 +31,7 @@ function parseGitHubURL(url: URL): Repository {
 	const [owner, repo, type, ...rest] = pathParts;
 
 	if (!owner || !repo) {
-		throw new Error(
-			"Invalid GitHub URL: Missing required URL components",
-		);
+		throw new Error("Invalid GitHub URL: Missing required URL components");
 	}
 
 	// If no type is specified, treat it as a repository URL
@@ -128,26 +122,21 @@ export function getRepo<R extends keyof Repository = never>(
 const BackoffKit = Octokit.plugin(retry, throttling);
 
 export async function getOctokit() {
-	const preferences = getPreferenceValues<Preferences>();
+	const { GITHUB_TOKEN } = getPreferences();
 
-	if (!preferences.GITHUB_TOKEN) {
+	if (!GITHUB_TOKEN) {
 		throw new Error(
-			"GitHub token not found. Please set it in Raycast preferences.",
+			"GitHub token not found. Please set GITHUB_TOKEN in config or environment.",
 		);
 	}
 
 	return new BackoffKit({
-		auth: preferences.GITHUB_TOKEN,
+		auth: GITHUB_TOKEN,
 		request: {
 			fetch: fetch,
 		},
 		throttle: {
-			onRateLimit: async (
-				retryAfter,
-				options,
-				octokit,
-				retryCount,
-			) => {
+			onRateLimit: async (retryAfter, options, octokit, retryCount) => {
 				console.log(
 					`[GitHub API] Rate limit reached for ${options.method} ${options.url}. ${retryCount < 2 ? `Retrying in ${retryAfter}s...` : "Max retries reached."}`,
 				);

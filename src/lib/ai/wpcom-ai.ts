@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { wpcomRequest } from "../wpcom/wpcom";
-import { Cache } from "@raycast/api";
 import { autocache } from "../utilities";
 import crypto from "crypto";
 export const WPCOM_MODELS = [
@@ -94,73 +92,4 @@ export async function cachedAiAPI(
 	return autocache(`${model}_${hash}`, 1000 * 60 * 60 * 24, () =>
 		aiAPI(payload, model),
 	);
-}
-
-export function cacheWithRegistry<T>(namespace: string) {
-	const cache = new Cache({ namespace });
-	const registryKey = `${namespace}-registry`;
-	const getRegistry = () => JSON.parse(cache.get(registryKey) || "[]");
-
-	const set = (key: string, value: T) => {
-		cache.set(key, JSON.stringify(value));
-
-		// If this is a new key, add it to the registry
-		const registry = getRegistry();
-		if (!registry.includes(key)) {
-			registry.push(key);
-			cache.set(registryKey, JSON.stringify(registry));
-		}
-	};
-
-	const get = (key: string): T | undefined => {
-		try {
-			return JSON.parse(cache.get(key) || "");
-		} catch (e) {
-			return undefined;
-		}
-	};
-
-	const getAll = (): { id: string; entry: T }[] => {
-		const registry = getRegistry();
-		return registry.map((key: string) => ({
-			id: key,
-			entry: get(key),
-		}));
-	};
-
-	return { get, getAll, set };
-}
-
-export function threadName(thread: AI_Message[]) {
-	return (
-		thread.find((entry) => entry.role === "user")?.content ||
-		"New Thread"
-	);
-}
-
-export function useChatHistory(
-	namespace: string,
-	key: string,
-	systemPrompt?: string,
-) {
-	const cache = cacheWithRegistry<AI_Message[]>(namespace);
-
-	const [history, setHistory] = useState<AI_Message[]>(
-		cache.get(key) || [],
-	);
-
-	const addMessage = (message: AI_Message) => {
-		setHistory((prev) => {
-			const newHistory = [...prev, message];
-			cache.set(key, newHistory);
-			return newHistory;
-		});
-		return [...history, message];
-	};
-
-	if (systemPrompt && history.length === 0) {
-		addMessage({ role: "system", content: systemPrompt });
-	}
-
-	return [history, addMessage, setHistory] as const;
 }

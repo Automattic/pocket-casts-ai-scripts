@@ -1,91 +1,144 @@
-import { OAuth } from "@raycast/api";
-import fetch from "node-fetch";
+import WPOAuth from "wpcom-oauth";
+import { dirname, join } from "path";
+import { homedir } from "os";
+import fs from "fs-extra";
+import { $ } from "bun";
 
-function getClientId(): string {
-	return "80832";
+const settings = {
+	client_id: "50066",
+	client_secret:
+		"zAk5dJ9LN53ddTAEtee26ATJZsLkbaVxXwnzzmpFwUoRRRYbe46HsSF2vJ6E4Yxc",
+	url: {
+		redirect: "http://localhost:8061",
+	},
+};
+
+const wpoauth = WPOAuth(settings);
+
+interface TokenSet {
+	accessToken: string;
+	refreshToken?: string;
+	expiresIn?: number;
+	expiresAt?: number;
 }
 
-const oauthClient = new OAuth.PKCEClient({
-	redirectMethod: OAuth.RedirectMethod.App,
-	providerName: "WordPress.com",
-	providerIcon: "wpcom.png",
-	providerId: "wordpressdotcom",
-	description: "Connect your WordPress.com account",
-});
+const tokenPath = join(homedir(), ".config", "wpcom", "tokens.json");
+
+export async function getOAuthTokens(): Promise<TokenSet | undefined> {
+	try {
+		await fs.ensureDir(dirname(tokenPath));
+		if (!(await fs.pathExists(tokenPath))) {
+			return undefined;
+		}
+
+		const content = await fs.readFile(tokenPath, "utf8");
+		return JSON.parse(content) as TokenSet;
+	} catch {
+		return undefined;
+	}
+}
 
 export async function authorize(): Promise<void> {
-	const tokenSet = await oauthClient.getTokens();
-	if (tokenSet?.accessToken) {
-		if (tokenSet.refreshToken && tokenSet.isExpired()) {
-			await oauthClient.setTokens(
-				await refreshTokens(tokenSet.refreshToken),
-			);
-		}
-		return;
-	}
+	return new Promise((resolve, reject) => {
+		const server = Bun.serve({
+			port: 8061,
+			async fetch(req) {
+				const url = new URL(req.url);
+				const code = url.searchParams.get("code");
 
-	const authRequest = await oauthClient.authorizationRequest({
-		endpoint: "https://public-api.wordpress.com/oauth2/authorize",
-		clientId: getClientId(),
-		scope: "",
+				if (!code) {
+					return new Response(
+						`
+						<html>
+							<head>
+								<title>WordPress.com Authorization</title>
+								<style>
+									body { font-family: system-ui; max-width: 45em; margin: 2em auto; padding: 0 1em; line-height: 1.5; }
+								</style>
+							</head>
+							<body>
+								<h1>WordPress.com Authorization</h1>
+								<p>Please authorize the application to continue.</p>
+								<a href="${wpoauth.urlToConnect()}" style="display: inline-block; text-decoration: none; background: #00aadc; color: white; padding: 10px 20px; border-radius: 4px;">Authorize</a>
+							</body>
+						</html>
+					`,
+						{
+							headers: { "Content-Type": "text/html" },
+						},
+					);
+				}
+
+				// Handle the OAuth callback
+				wpoauth.code(code);
+				wpoauth.requestAccessToken(
+					async (
+						err: Error | null,
+						data: { access_token: string },
+					) => {
+						if (err) {
+							server.stop();
+							reject(err);
+							return;
+						}
+
+						if (data?.access_token) {
+							await fs.ensureDir(dirname(tokenPath));
+							await fs.writeFile(
+								tokenPath,
+								JSON.stringify(
+									{
+										accessToken: data.access_token,
+									},
+									null,
+									2,
+								),
+							);
+
+							server.stop();
+							resolve();
+						}
+					},
+				);
+
+				return new Response(
+					`
+					<html>
+						<head>
+							<title>Authorization Successful</title>
+							<style>
+								body { font-family: system-ui; max-width: 45em; margin: 2em auto; padding: 0 1em; line-height: 1.5; }
+							</style>
+						</head>
+						<body>
+							<h1>Authorization Successful!</h1>
+							<p>You can close this window and return to the application.</p>
+						</body>
+					</html>
+				`,
+					{
+						headers: { "Content-Type": "text/html" },
+					},
+				);
+			},
+		});
+
+		// Open the browser and handle any errors
+		(async () => {
+			try {
+				await $`open http://localhost:8061`;
+			} catch (error) {
+				server.stop();
+				reject(new Error("Failed to open browser for authorization"));
+			}
+		})();
 	});
-	const { authorizationCode } = await oauthClient.authorize(authRequest);
-	await oauthClient.setTokens(
-		await fetchTokens(authRequest, authorizationCode),
-	);
-}
-
-export async function fetchTokens(
-	authRequest: OAuth.AuthorizationRequest,
-	authCode: string,
-): Promise<OAuth.TokenResponse> {
-	const params = new URLSearchParams();
-	params.append("client_id", getClientId());
-	params.append("code", authCode);
-	params.append("code_verifier", authRequest.codeVerifier);
-	params.append("grant_type", "authorization_code");
-	params.append("redirect_uri", authRequest.redirectURI);
-
-	const response = await fetch(
-		"https://public-api.wordpress.com/oauth2/token",
-		{ method: "POST", body: params },
-	);
-	if (!response.ok) {
-		console.error("fetch tokens error:", await response.text());
-		throw new Error(response.statusText);
-	}
-	return (await response.json()) as OAuth.TokenResponse;
-}
-
-export async function getOAuthTokens(): Promise<
-	OAuth.TokenSet | undefined
-> {
-	return await oauthClient.getTokens();
 }
 
 export async function resetOAuthTokens(): Promise<void> {
-	await oauthClient.removeTokens();
-}
-
-async function refreshTokens(
-	refreshToken: string,
-): Promise<OAuth.TokenResponse> {
-	const params = new URLSearchParams();
-	params.append("client_id", getClientId());
-	params.append("refresh_token", refreshToken);
-	params.append("grant_type", "refresh_token");
-
-	const response = await fetch(
-		"https://public-api.wordpress.com/oauth2/token",
-		{ method: "POST", body: params },
-	);
-	if (!response.ok) {
-		console.error("refresh tokens error:", await response.text());
-		throw new Error(response.statusText);
+	try {
+		await fs.remove(tokenPath);
+	} catch {
+		// Ignore errors
 	}
-
-	const tokenResponse = (await response.json()) as OAuth.TokenResponse;
-	tokenResponse.refresh_token =
-		tokenResponse.refresh_token ?? refreshToken;
-	return tokenResponse;
 }

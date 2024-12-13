@@ -1,20 +1,93 @@
-import { GitHubTokenGuard } from "./components/github-token-guard";
-import { maybeUseDebug } from './preferences';
-import { ReportView } from "./workflow/sprint-update/components/report-view";
-import { useSprintReport } from "./workflow/sprint-update/hooks/use-sprint-report";
+import minimist from "minimist";
+import chalk from "chalk";
+import { getThursdayUpdates } from "./workflow/sprint-update/hooks/get-thursday-updates";
+import { getPreferences } from "./preferences";
+import { getOAuthTokens, authorize } from "./lib/oauth";
 
-export default function Command() {
-	maybeUseDebug();
-	const { isLoading, report, progress, error } = useSprintReport();
-
-	return (
-		<GitHubTokenGuard>
-			<ReportView
-				markdown={report}
-				isLoading={isLoading}
-				progress={progress}
-				error={error}
-			/>
-		</GitHubTokenGuard>
-	);
+interface CliOptions {
+	debug?: boolean;
+	verbose?: boolean;
+	help?: boolean;
+	from?: string;
+	to?: string;
 }
+
+function showHelp() {
+	console.log(`
+${chalk.bold("Sprint Update Generator")}
+
+Usage: sprint-update [options]
+
+Options:
+  --debug    Enable debug logging
+  --verbose  Enable verbose logging
+  --from     Start date (YYYY-MM-DD)
+  --to       End date (YYYY-MM-DD)
+  --help     Show this help message
+`);
+}
+
+async function validateConfig() {
+	const { GITHUB_TOKEN } = getPreferences();
+	const oauthTokens = await getOAuthTokens();
+	const missingConfig = [];
+
+	if (!GITHUB_TOKEN) {
+		missingConfig.push("GitHub Token (GITHUB_TOKEN)");
+	}
+
+	if (!oauthTokens) {
+		console.log(
+			"WordPress.com OAuth tokens not found. Starting authorization flow...",
+		);
+		try {
+			await authorize();
+			// Verify tokens were obtained
+			const tokens = await getOAuthTokens();
+			if (!tokens) {
+				missingConfig.push(
+					"WordPress.com OAuth tokens (authorization failed)",
+				);
+			}
+		} catch (error) {
+			missingConfig.push(
+				`WordPress.com OAuth tokens (${error instanceof Error ? error.message : "authorization failed"})`,
+			);
+		}
+	}
+
+	if (missingConfig.length > 0) {
+		throw new Error(
+			`Missing required configuration:\n${missingConfig.map((item) => `- ${item}`).join("\n")}\n\nPlease set up the missing configuration before running the command.`,
+		);
+	}
+}
+
+async function main() {
+	const argv = minimist<CliOptions>(process.argv.slice(2));
+
+	if (argv.help) {
+		showHelp();
+		process.exit(0);
+	}
+
+	try {
+		await validateConfig();
+
+		const endDate = argv.to ? new Date(argv.to) : new Date();
+		const startDate = argv.from
+			? new Date(argv.from)
+			: new Date(endDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+		const report = await getThursdayUpdates({ startDate, endDate });
+		console.log(report);
+	} catch (error) {
+		console.error(
+			chalk.red("Error:"),
+			error instanceof Error ? error.message : String(error),
+		);
+		process.exit(1);
+	}
+}
+
+main().catch(console.error);
