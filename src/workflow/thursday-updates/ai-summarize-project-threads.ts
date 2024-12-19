@@ -34,8 +34,6 @@ async function summarizeSingleProjectThread(thread: PostWithComments) {
 		.prompt((p) =>
 			p
 				.setLabel("Project Thread Summary")
-				.incognito()
-				.saveAs("project_thread_summary")
 				.prompt([
 					"1 - Get the current status of the project. Valid statuses are:",
 					"- In Planning",
@@ -50,38 +48,49 @@ async function summarizeSingleProjectThread(thread: PostWithComments) {
 				.section("format", [
 					"Project Status: {status}",
 					"# Title",
+					"",
 					"### Latest Updates",
 					"- {1 sentence summary of update #1}",
 					"- {1 sentence summary of update #2}",
 					"- {repeat for each update}",
-					"# Summary",
-					"{2 sentence summary of the current state of the project}",
+					"",
+					"# About Project",
+					"{2 sentence summary of what this project is about}",
+					"",
+					"# Update Summary",
+					"{2 sentence summary of the updates}",
 				])
 				.section("example", [
 					"Project Status: In Progress",
 					"# UI Redesign",
+					"",
 					"## Latest Updates",
 					"- 15-03-2024: Added a new seek bar for touch input",
 					"- 11-03-2024: Removed the play button from the player",
 					"- 09-03-2024: Improved search functionality",
 					"- 04-03-2024: Changed the play button color to match the theme",
-					"## Summary",
-					"Completed redesign of the player interface. This involved refactoring React components and adding a new seek bar for touch input.",
+					"",
+					"## About Project",
+					"The UI Redesign project is focused on improving the player interface for touch input. This includes adding a new seek bar and refactoring React components.",
+					"",
+					"## Update Summary",
+					"Completed redesign of the player interface. Currently updating the React components and adding a new seek bar for touch input.",
 				])
 				.section("project_thread", "{{project_thread}}"),
 		)
 		.format(
 			v.object({
 				title: v.string("Title of the project thread"),
-				summary: v.string(
-					"Extract the summary of the project thread",
-				),
+				about: v.string("About the project"),
 				status: v.string("Current status of the project"),
 				updates: v.array(
 					v.object({
 						date: v.string("Date of the update"),
 						summary: v.string("Summary of the update"),
 					}),
+				),
+				summary: v.string(
+					"Extract the Update Summary text",
 				),
 			}),
 		)
