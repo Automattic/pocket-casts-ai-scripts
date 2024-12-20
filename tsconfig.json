@@ -25,11 +25,8 @@
     "noPropertyAccessFromIndexSignature": false,
 	"baseUrl": ".",
 	"paths": {
-		"@/*": [
+		"@pocket-ai/*": [
 			"src/*"
-		],
-		"@ai/*": [
-			"src/lib/ai/*"
 		]
 	}
   }

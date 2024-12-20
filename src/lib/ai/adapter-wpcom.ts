@@ -1,5 +1,5 @@
 import type * as NChain from "./nchain/types";
-import { type AI_Message, cachedAiAPI, type WPCOM_MODEL } from "@ai/wpcom-ai";
+import { type AI_Message, cachedAiAPI, type WPCOM_MODEL } from "@pocket-ai/lib/ai/wpcom-ai";
 
 const AvailableModels = {
 	"llama3-8b": "llama3-8b",

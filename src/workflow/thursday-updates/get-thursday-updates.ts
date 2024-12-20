@@ -1,17 +1,17 @@
-import { getRepo } from "@/lib/github/octokit";
-import { getPullRequests } from "@/lib/github/pull-requests";
-import { formatReport } from "@/workflow/thursday-updates/format-report";
-import { getProjectThreads } from "@/lib/wpcom/posts";
-import type { PostWithComments } from "@/lib/wpcom/types";
-import { summarizeProjectThreads } from "@/workflow/thursday-updates/ai-summarize-project-threads";
+import { getRepo } from "@pocket-ai/lib/github/octokit";
+import { getPullRequests } from "@pocket-ai/lib/github/pull-requests";
+import { formatReport } from "@pocket-ai/workflow/thursday-updates/format-report";
+import { getProjectThreads } from "@pocket-ai/lib/wpcom/posts";
+import type { PostWithComments } from "@pocket-ai/lib/wpcom/types";
+import { summarizeProjectThreads } from "@pocket-ai/workflow/thursday-updates/ai-summarize-project-threads";
 import {
 	type PullRequestWithSummary,
 	summarizePullRequests,
-} from "@/workflow/thursday-updates/ai-summarize-pull-requests";
-import { getTeamPRs } from "@/workflow/thursday-updates/get-team-prs";
-import { aiReportTopShipped } from "@/workflow/thursday-updates/ai-report-top-shipped";
+} from "@pocket-ai/workflow/thursday-updates/ai-summarize-pull-requests";
+import { getTeamPRs } from "@pocket-ai/workflow/thursday-updates/get-team-prs";
+import { aiReportTopShipped } from "@pocket-ai/workflow/thursday-updates/ai-report-top-shipped";
 import ora from "ora";
-import { formatProjectUpdates } from "@/workflow/thursday-updates/format-project-updates";
+import { formatProjectUpdates } from "@pocket-ai/workflow/thursday-updates/format-project-updates";
 
 export type ProgressStep = {
 	step: number;

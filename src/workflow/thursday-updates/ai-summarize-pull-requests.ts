@@ -1,7 +1,7 @@
-import { openai } from "@/lib/ai/presets";
+import { openai } from "@pocket-ai/lib/ai/presets";
 import pMap from "p-map";
 import type { components } from "@octokit/openapi-types";
-import { v } from "@/lib/ai/nchain";
+import { v } from "@pocket-ai/lib/ai/nchain";
 
 export type PullRequestWithSummary = Awaited<
 	ReturnType<typeof summarizePullRequest>

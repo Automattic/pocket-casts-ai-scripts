@@ -1,4 +1,4 @@
-import { openai } from "@/lib/ai/presets";
+import { openai } from "@pocket-ai/lib/ai/presets";
 import type { PullRequestWithSummary } from "./ai-summarize-pull-requests";
 
 const examples = [

@@ -1,8 +1,8 @@
-import { openai } from "@/lib/ai/presets";
-import type { PostWithComments } from "@/lib/wpcom/types";
-import { htmlToMarkdown } from "@/lib/utilities";
+import { openai } from "@pocket-ai/lib/ai/presets";
+import type { PostWithComments } from "@pocket-ai/lib/wpcom/types";
+import { htmlToMarkdown } from "@pocket-ai/lib/utilities";
 import pMap from "p-map";
-import { v } from "@/lib/ai/nchain";
+import { v } from "@pocket-ai/lib/ai/nchain";
 
 export type ProjectThreadWithSummary = Awaited<
 	ReturnType<typeof summarizeSingleProjectThread>
