@@ -10,7 +10,14 @@ import { autocache } from "../utilities";
 import { logger } from "../logger";
 import { autoproxxyFetch } from "./autoproxxy";
 
-export async function wpcomRequest<T>(
+async function authorizedRequest<T>(
+	/**
+	 * Depending on whether this is an internal (autoproxxy validated) request
+	 * or an external (plain oauth) request, we have to use different fetching functions.
+	 *
+	 * The autoproxxyFetch is a workaround because Bun only supports HTTP/HTTPS proxies.
+	 */
+	fetchingFn: typeof fetch | typeof autoproxxyFetch,
 	path: string | URL,
 	requestArguments?: Record<string, unknown>,
 	headers: Record<string, string> = {},
@@ -26,7 +33,7 @@ export async function wpcomRequest<T>(
 		path = `${path.pathname}${path.search}`;
 	}
 	const url = `https://public-api.wordpress.com/${path}`;
-	const response = await autoproxxyFetch(url, {
+	const response = await fetchingFn(url, {
 		headers: {
 			Authorization: `Bearer ${tokenSet?.accessToken}`,
 			"Content-Type": "application/json",
@@ -36,13 +43,35 @@ export async function wpcomRequest<T>(
 	});
 
 	if (!response.ok) {
-		const text = response.text();
+		const text = await response.text();
 		logger().error(`Failed to fetch "${url}": ${response.statusText}`);
 		logger().error("WPCOM: ", text);
 		throw new Error(text || response.statusText);
 	}
 
 	return (await response.json()) as T;
+}
+
+/**
+ * A regular WordPress.com Public API Request
+ */
+export async function wpcomRequest<T>(
+	path: string | URL,
+	requestArguments?: Record<string, unknown>,
+	headers: Record<string, string> = {},
+): Promise<T> {
+	return await authorizedRequest(fetch, path, requestArguments, headers);
+}
+
+/**
+ * Internal, Automattician-only WordPress.com API Request
+ */
+export async function a8cRequest<T>(
+	path: string | URL,
+	requestArguments?: Record<string, unknown>,
+	headers: Record<string, string> = {},
+): Promise<T> {
+	return await authorizedRequest(autoproxxyFetch, path, requestArguments, headers);
 }
 
 export enum SearchSortBy {
@@ -60,7 +89,7 @@ export async function mgs(
 ): Promise<SearchResult[]> {
 	logger().info("Searching for: " + query);
 
-	const search = await wpcomRequest<MGS_Response>(
+	const search = await a8cRequest<MGS_Response>(
 		`rest/v1.1/internal/search`,
 		{
 			method: "POST",
@@ -116,7 +145,7 @@ export async function matticspace() {
 		"automatticians",
 		1000 * 60 * 60 * 24,
 		async () =>
-			await wpcomRequest<Automatticians>(
+			await a8cRequest<Automatticians>(
 				`wpcom/v2/meetamattician/automatticians`,
 			),
 	);
@@ -131,7 +160,7 @@ export async function matticspace() {
  */
 export async function p2s(): Promise<P2[]> {
 	const sites = await autocache("p2s", 1000 * 60 * 60 * 24, async () => {
-		const p2s = await wpcomRequest<P2s>(`rest/v1.1/internal/P2s`);
+		const p2s = await a8cRequest<P2s>(`rest/v1.1/internal/P2s`);
 
 		// fetch the slug out of P2s object keys
 		return Object.keys(p2s.list).map((slug): P2 => {
@@ -161,7 +190,7 @@ export async function getBlog(
 	}
 
 	try {
-		return await wpcomRequest<SiteData>(`rest/v1.1/internal/site-search`, {
+		return await a8cRequest<SiteData>(`rest/v1.1/internal/site-search`, {
 			method: "POST",
 			body: JSON.stringify({
 				query,
