@@ -1,6 +1,5 @@
 import chalk from "chalk";
-import { args } from "./utilities";
-
+import minimist from "minimist";
 export type LogLevel = "debug" | "verbose" | "info" | "warn" | "error";
 
 class Logger {
@@ -47,10 +46,11 @@ export function initLogger(options: { debug?: boolean; verbose?: boolean }) {
 }
 
 export function logger(): Logger {
+	const args = minimist(Bun.argv.slice(2));
 	if (!instance) {
 		instance = new Logger({
-			debug: !!args().debug,
-			verbose: !!args().verbose,
+			debug: !!args.debug,
+			verbose: !!args.verbose,
 		});
 	}
 	return instance;
