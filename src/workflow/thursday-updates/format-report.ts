@@ -4,6 +4,11 @@ const template = `
 ## Top Items Shipped
 {{top_shipped}}
 
+## Key Metrics
+
+__Reserved space for key metrics__
+
+
 ## Projects
 {{project_updates}}
 
