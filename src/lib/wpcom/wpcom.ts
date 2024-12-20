@@ -1,6 +1,3 @@
-import fetch from "node-fetch";
-import { SocksProxyAgent } from "socks-proxy-agent";
-import { getPreferences } from "../../preferences";
 import { authorize, getOAuthTokens } from "../oauth";
 import type {
 	Automatticians,
@@ -11,7 +8,7 @@ import type {
 } from "./types";
 import { autocache } from "../utilities";
 import { logger } from "../logger";
-import { proxyFetch } from './proxy';
+import { autoproxxyFetch } from "./autoproxxy";
 
 export async function wpcomRequest<T>(
 	path: string | URL,
@@ -19,7 +16,6 @@ export async function wpcomRequest<T>(
 	headers: Record<string, string> = {},
 ): Promise<T> {
 	const tokenSet = await getOAuthTokens();
-	const { autoproxxy } = getPreferences();
 
 	if (!tokenSet) {
 		await authorize();
@@ -30,7 +26,7 @@ export async function wpcomRequest<T>(
 		path = `${path.pathname}${path.search}`;
 	}
 	const url = `https://public-api.wordpress.com/${path}`;
-	const response = await proxyFetch(url, {
+	const response = await autoproxxyFetch(url, {
 		headers: {
 			Authorization: `Bearer ${tokenSet?.accessToken}`,
 			"Content-Type": "application/json",
@@ -165,15 +161,12 @@ export async function getBlog(
 	}
 
 	try {
-		return await wpcomRequest<SiteData>(
-			`rest/v1.1/internal/site-search`,
-			{
-				method: "POST",
-				body: JSON.stringify({
-					query,
-				}),
-			},
-		);
+		return await wpcomRequest<SiteData>(`rest/v1.1/internal/site-search`, {
+			method: "POST",
+			body: JSON.stringify({
+				query,
+			}),
+		});
 	} catch (e) {
 		if (e instanceof Error && e.message.includes("Site not found")) {
 			throw new Error("Site not found");

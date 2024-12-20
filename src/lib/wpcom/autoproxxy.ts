@@ -1,7 +1,7 @@
 import { getPreferences } from "@pocket-ai/preferences";
 import { $ } from "bun";
 
-const { autoproxxy } = getPreferences();
+const { autoproxxy_uri } = getPreferences();
 
 type Response = {
 	ok: boolean;
@@ -12,13 +12,14 @@ type Response = {
 };
 
 /**
- * Proxy fetch using curl under the hood.
+ * Proxy fetch using curl under the hood,
+ * because Bun only supports HTTP/HTTPS proxies.
  */
-export async function proxyFetch(
+export async function autoproxxyFetch(
 	url: string,
 	opts: RequestInit = {},
 ): Promise<Response> {
-	const curlArgs: string[] = [`--proxy ${$.escape(autoproxxy)}`, "-i", "-s"];
+	const curlArgs: string[] = [`--proxy ${$.escape(autoproxxy_uri)}`, "-i", "-s"];
 
 	// Handle HTTP method
 	if (opts.method) {
