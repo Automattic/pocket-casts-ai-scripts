@@ -49,7 +49,7 @@ export async function askForCopyPreference(content: string): Promise<void> {
 	const choice = await select({
 		message: "Would you like to copy the report?",
 		options: [
-			{ label: "Copy as rich text (HTML)", value: "rich" },
+			{ label: "Copy as rich text (for Google Docs)", value: "rich" },
 			{ label: "Copy as markdown", value: "markdown" },
 			{ label: "Don't copy", value: "none" },
 		],
