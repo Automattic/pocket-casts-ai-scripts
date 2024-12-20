@@ -3,9 +3,10 @@ import { getThursdayUpdates } from "./workflow/thursday-updates/get-thursday-upd
 import { getPreferences } from "./preferences";
 import { getOAuthTokens, authorize } from "./lib/oauth";
 import { getGitHubTokenSetupInstructions } from "./lib/github/setup-instructions";
-import { askForCopyPreference, args } from './lib/utilities';
+import { askForCopyPreference } from './lib/clipboard';
+import { args } from './workflow/thursday-updates/args';
 
-function showHelp() {
+function help() {
 	console.log(`
 ${chalk.bold("Sprint Update Generator")}
 
@@ -62,7 +63,7 @@ async function main() {
 	const argv = args();
 
 	if (argv.help) {
-		showHelp();
+		help();
 		process.exit(0);
 	}
 
