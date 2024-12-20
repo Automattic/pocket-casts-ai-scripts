@@ -10,9 +10,6 @@ export async function formatProjectUpdates(
 			`### ${thread.ai.title} – ${thread.ai.status} [(link)](${thread.guid.rendered})`,
 		);
 		sections.push(thread.ai.summary);
-		for (const update of thread.ai.updates) {
-			sections.push(`- ${update.date}: ${update.summary}`);
-		}
 		sections.push("");
 	}
 
