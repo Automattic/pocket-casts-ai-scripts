@@ -18,31 +18,31 @@ export async function proxyFetch(
 	url: string,
 	opts: RequestInit = {},
 ): Promise<Response> {
-	const curlArgs: string[] = [`--proxy ${autoproxxy}`, "-i", "-s"];
+	const curlArgs: string[] = [`--proxy ${$.escape(autoproxxy)}`, "-i", "-s"];
 
 	// Handle HTTP method
 	if (opts.method) {
-		curlArgs.push(`-X ${opts.method}`);
+		curlArgs.push(`-X ${$.escape(opts.method)}`);
 	}
 
 	// Handle headers
 	if (opts.headers) {
 		const headers = opts.headers as Record<string, string>;
 		Object.entries(headers).forEach(([key, value]) => {
-			curlArgs.push(`-H "${key}: ${value}"`);
+			curlArgs.push(`-H ${$.escape(`${key}: ${value}`)}`);
 		});
 	}
 
 	// Handle body
 	if (opts.body) {
 		if (typeof opts.body === "string") {
-			curlArgs.push(`-d '${opts.body}'`);
+			curlArgs.push(`-d ${$.escape(opts.body)}`);
 		} else if (opts.body instanceof URLSearchParams) {
-			curlArgs.push(`-d '${opts.body.toString()}'`);
+			curlArgs.push(`-d ${$.escape(opts.body.toString())}`);
 		} else if (opts.body instanceof FormData) {
-			throw new Error("FormData not supported yet");
+			throw new Error("FormData not supported");
 		} else {
-			curlArgs.push(`-d '${JSON.stringify(opts.body)}'`);
+			curlArgs.push(`-d ${$.escape(JSON.stringify(opts.body))}`);
 		}
 	}
 
