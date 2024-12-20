@@ -2,6 +2,28 @@ import { marked } from "marked";
 import { select } from "@clack/prompts";
 import { $ } from "bun";
 import { isMacOS } from "./utilities";
+import fs from "fs/promises";
+
+function wrapHtmlInDocument(content: string): string {
+	return `<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<style>
+		body {
+			font-family: "Arial", sans-serif;
+			font-size: 11pt;
+		}
+		ul li::marker {
+			color: black;
+		}
+	</style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
+}
 
 /**
  * Copy rich text to the clipboard
@@ -11,9 +33,9 @@ async function copyViaTextUtil(text: string) {
 		throw new Error("copyRichText is only supported on macOS");
 	}
 	const tempFile = `/tmp/pr-report-${Date.now()}.html`;
-	await $`printf '%s' "${text}" > ${tempFile}`;
+	await fs.writeFile(tempFile, wrapHtmlInDocument(text));
 	await $`textutil -convert rtf -format html ${tempFile} -stdout | pbcopy`;
-	await $`rm ${tempFile}`;
+	await fs.unlink(tempFile);
 }
 
 /**
