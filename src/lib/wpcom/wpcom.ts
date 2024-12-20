@@ -11,6 +11,7 @@ import type {
 } from "./types";
 import { autocache } from "../utilities";
 import { logger } from "../logger";
+import { proxyFetch } from './proxy';
 
 export async function wpcomRequest<T>(
 	path: string | URL,
@@ -29,8 +30,7 @@ export async function wpcomRequest<T>(
 		path = `${path.pathname}${path.search}`;
 	}
 	const url = `https://public-api.wordpress.com/${path}`;
-	const response = await fetch(url, {
-		agent: new SocksProxyAgent(autoproxxy),
+	const response = await proxyFetch(url, {
 		headers: {
 			Authorization: `Bearer ${tokenSet?.accessToken}`,
 			"Content-Type": "application/json",
@@ -40,7 +40,7 @@ export async function wpcomRequest<T>(
 	});
 
 	if (!response.ok) {
-		const text = await response.text();
+		const text = response.text();
 		logger().error(`Failed to fetch "${url}": ${response.statusText}`);
 		logger().error("WPCOM: ", text);
 		throw new Error(text || response.statusText);
