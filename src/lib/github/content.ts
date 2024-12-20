@@ -30,7 +30,7 @@ type GitHubError = Error & {
  * Fetch file content from GitHub repository
  */
 async function fetchFile(
-	octokit: Octokit,
+	octokit: Awaited<ReturnType<typeof getOctokit>>,
 	owner: string,
 	repo: string,
 	path?: string,
