@@ -12,6 +12,7 @@ import { getTeamPRs } from "@pocket-ai/workflow/thursday-updates/get-team-prs";
 import { aiReportTopShipped } from "@pocket-ai/workflow/thursday-updates/ai-report-top-shipped";
 import ora from "ora";
 import { formatProjectUpdates } from "@pocket-ai/workflow/thursday-updates/format-project-updates";
+import { autocache } from '@pocket-ai/lib/utilities';
 
 export type ProgressStep = {
 	step: number;
@@ -110,7 +111,12 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 	}).start();
 	try {
 		spinner.text = `Gathering data from ${Object.values(repositorySources).flat().length} repositories...`;
-		const pullRequestsPromise = getPullRequestsByTeam(dateRange);
+		const pullRequestsPromise = autocache(
+			"pull-requests-by-team",
+			1000 * 60 * 60 * 6, // 3 hours
+			async () => getPullRequestsByTeam(dateRange),
+
+		);
 
 		spinner.text = "Fetching Project Threads from Pocket Casts P2...";
 		const projectThreadsRaw = await getProjectThreadRange(
