@@ -1,18 +1,18 @@
 const template = `
-# Sprint Update - {{date}}
+## Sprint Update - {{date}}
 
-## Top Items Shipped
+#### Top Items Shipped
 {{top_shipped}}
 
-## Key Metrics
+#### Key Metrics
 
-__Reserved space for key metrics__
+_Reserved space for key metrics_
 
 
-## Projects
+#### Projects
 {{project_updates}}
 
-## Team Updates
+#### Team Updates
 {{team_updates}}
 `.trim();
 
