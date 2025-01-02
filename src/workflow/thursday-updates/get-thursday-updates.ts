@@ -14,7 +14,6 @@ import ora from "ora";
 import { formatProjectUpdates } from "@pocket-ai/workflow/thursday-updates/format-project-updates";
 import { autocache } from '@pocket-ai/lib/utilities';
 import { repositorySources } from './sources';
-import { enhanceProjectSummaries } from './enhance-project-summaries';
 
 export type ProgressStep = {
 	step: number;
@@ -104,29 +103,27 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 			),
 		);
 
-		spinner.text = "Analyzing Project Threads...";
-		const projectThreads = await summarizeProjectThreads(projectThreadsRaw);
-
 		spinner.text = "Processing Pull Requests...";
 		const pullRequests = await pullRequestsPromise;
 
-		spinner.text = "Enhancing Project Summaries with PR data...";
-		const enhancedProjectThreads = await enhanceProjectSummaries(
-			projectThreads,
-			pullRequests.flatMap((p) => p.pullRequests),
-		);
+		spinner.text = "Analyzing Project Threads...";
+		const projectThreads = await summarizeProjectThreads(projectThreadsRaw, pullRequests.flatMap((p) => p.pullRequests));
+		console.log("\n\n Project Threads: ", projectThreads);
 
 		spinner.text = "Generating Project Updates...";
-		const projectUpdates = await formatProjectUpdates(enhancedProjectThreads);
+		const projectUpdates = await formatProjectUpdates(projectThreads);
+		console.log("\n\n Project Updates: ", projectUpdates);
 
 		spinner.text = "Generating Team Updates...";
 		const teamPullRequests = await getTeamPRs(pullRequests);
+		console.log("\n\n Team Pull Requests: ", teamPullRequests);
 
 		spinner.text = "Analyzing recently shipped features...";
 		const topShipped = await aiReportTopShipped(
 			projectUpdates,
 			pullRequests.flatMap((p) => p.pullRequests),
 		);
+		console.log("\n\n Top Shipped: ", topShipped);
 
 		const report = formatReport({
 			topShipped,
@@ -140,4 +137,4 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 		spinner.fail("Failed to generate report");
 		throw error;
 	}
-};
+}
