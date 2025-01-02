@@ -14,6 +14,7 @@ import ora from "ora";
 import { formatProjectUpdates } from "@pocket-ai/workflow/thursday-updates/format-project-updates";
 import { autocache } from '@pocket-ai/lib/utilities';
 import { repositorySources } from './sources';
+import { enhanceProjectSummaries } from './enhance-project-summaries';
 
 export type ProgressStep = {
 	step: number;
@@ -91,7 +92,6 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 			"pull-requests-by-team",
 			1000 * 60 * 60 * 6, // 3 hours
 			async () => getPullRequestsByTeam(dateRange),
-
 		);
 
 		spinner.text = "Fetching Project Threads from Pocket Casts P2...";
@@ -107,11 +107,17 @@ export const getThursdayUpdates = async (dateRange: DateRange) => {
 		spinner.text = "Analyzing Project Threads...";
 		const projectThreads = await summarizeProjectThreads(projectThreadsRaw);
 
-		spinner.text = "Generating Project Updates...";
-		const projectUpdates = await formatProjectUpdates(projectThreads);
-
 		spinner.text = "Processing Pull Requests...";
 		const pullRequests = await pullRequestsPromise;
+
+		spinner.text = "Enhancing Project Summaries with PR data...";
+		const enhancedProjectThreads = await enhanceProjectSummaries(
+			projectThreads,
+			pullRequests.flatMap((p) => p.pullRequests),
+		);
+
+		spinner.text = "Generating Project Updates...";
+		const projectUpdates = await formatProjectUpdates(enhancedProjectThreads);
 
 		spinner.text = "Generating Team Updates...";
 		const teamPullRequests = await getTeamPRs(pullRequests);
