@@ -248,7 +248,6 @@ async function summarizeSingleProjectThread(
 		await summarizer.process();
 	}
 
-	// Get the final summaries (either updated or original)
 	const finalProjectInfo = await summarizer.getFormattedArtifact("project_info", v.object({
 		title: v.string("Title of the project thread"),
 		status: v.string("Current status of the project"),
