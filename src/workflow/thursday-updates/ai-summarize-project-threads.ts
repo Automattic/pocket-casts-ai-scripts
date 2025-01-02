@@ -8,96 +8,122 @@ export type ProjectThreadWithSummary = Awaited<
 	ReturnType<typeof summarizeSingleProjectThread>
 >;
 
-async function summarizeSingleProjectThread(thread: PostWithComments) {
-	const result = await openai("smart")
+async function summarizeSingleProjectThread(projectThread: PostWithComments) {
+	const thread = openai("smart")
 		.insert(
 			"project_thread",
 			[
 				`<project_thread>`,
-				`	<project_thread_id>${thread.id}</project_thread_id>`,
-				`	<project_thread_title>${thread.title.rendered}</project_thread_title>`,
-				`	<project_thread_content>${htmlToMarkdown(thread.content.rendered)}</project_thread_content>`,
-				`	<project_thread_date>${thread.date_gmt}</project_thread_date>`,
-				...(thread.comments?.flatMap((comment) => {
+				`	<project_thread_id>${projectThread.id}</project_thread_id>`,
+				`	<project_thread_title>${projectThread.title.rendered}</project_thread_title>`,
+				`	<project_thread_content>${htmlToMarkdown(projectThread.content.rendered)}</project_thread_content>`,
+				`	<project_thread_date>${projectThread.date_gmt}</project_thread_date>`,
+				`</project_thread>`,
+			].join("\n"),
+		)
+		.insert(
+			"project_thread_comments",
+			[
+				...(projectThread.comments?.flatMap((comment) => {
 					return [
-						`	<project_thread_comment>`,
-						`		<project_thread_comment_date>${comment.date_gmt}</project_thread_comment_date>`,
-						`		<project_thread_comment_id>${comment.id}</project_thread_comment_id>`,
-						`		<project_thread_comment_author>${comment.author_name}</project_thread_comment_author>`,
-						`		<project_thread_comment_content>${htmlToMarkdown(comment.content.rendered)}</project_thread_comment_content>`,
-						`	</project_thread_comment>`,
+						`	<project_update>`,
+						`		<update_date>${comment.date_gmt}</update_date>`,
+						`		<update_content>${htmlToMarkdown(comment.content.rendered)}</update_content>`,
+						`	</project_update>`,
 					];
 				}) || []),
-				`</project_thread>`,
 			].join("\n"),
 		)
 		.prompt((p) =>
 			p
-				.setLabel("Project Thread Summary")
+				.setLabel("Project Information")
+				.saveAs("project_info")
+				.incognito()
 				.prompt([
-					"1 - Get the current status of the project. Valid statuses are:",
-					"- In Planning",
-					"- In Production",
-					"- In Progress",
-					"- In Staging",
-					"- On Hold",
-					"2 - Extract the latest project updates. Summarize them if they are too long.",
-					"3 - Remove 'Project Thread' from the title.",
-					"4 - Summarize the latest updates and what the project is about according to the following format",
+					"Extract the basic project information:",
+					"1. Determine the current status of the project from the following options:",
+					"   - In Planning",
+					"   - In Production",
+					"   - In Progress",
+					"   - In Staging",
+					"   - On Hold",
+					"2. Remove 'Project Thread' from the title.",
+					"3. Provide a concise summary of what the project is about.",
 				])
-				.section("format", [
-					"Project Status: {status}",
-					"# Title",
-					"",
-					"### Latest Updates",
-					"- {1 sentence summary of update #1}",
-					"- {1 sentence summary of update #2}",
-					"- {repeat for each update}",
-					"",
-					"# About Project",
-					"{2 sentence summary of what this project is about}",
-					"",
-					"# Update Summary",
-					"{2 sentence summary of the updates}",
-				])
+				.section("project_thread", "{{project_thread}}")
 				.section("example", [
-					"Project Status: In Progress",
-					"# UI Redesign",
-					"",
-					"## Latest Updates",
-					"- 15-03-2024: Added a new seek bar for touch input",
-					"- 11-03-2024: Removed the play button from the player",
-					"- 09-03-2024: Improved search functionality",
-					"- 04-03-2024: Changed the play button color to match the theme",
-					"",
-					"## About Project",
-					"The UI Redesign project is focused on improving the player interface for touch input. This includes adding a new seek bar and refactoring React components.",
-					"",
-					"## Update Summary",
-					"Completed redesign of the player interface. Currently updating the React components and adding a new seek bar for touch input.",
+					"Title: Rainbow Theme Generator",
+					"Status: In Progress",
+					"About: An experimental feature to automatically generate color themes based on user's listening history and mood preferences.",
+				].join("\n"))
+		)
+		.prompt((p) =>
+			p
+				.setLabel("Project Updates")
+				.saveAs("project_update_summary")
+				.incognito()
+				.prompt([
+					"Extract and summarize each update from the project thread:",
+					"1. List updates in chronological order.",
+					"2. For each update, provide the date and a brief summary (1-2 sentences).",
+					"3. Use direct language.",
+					"4. Focus on concrete changes and progress without unnecessary details.",
+					"5. If the update is from a team, include the team name in the summary.",
 				])
-				.section("project_thread", "{{project_thread}}"),
+				.section("about_project", "{{project_info}}")
+				.section("project_updates", "{{project_thread_comments}}")
+				.section("example", [
+					"2024-03-15: Android Team: Added bookmarks for user episodes on Android.",
+					"2024-03-10: iOS Team: Integrated tracking for missing call-to-actions.",
+					"2024-03-05: Completed user preference analysis.",
+					"2024-02-28: iOS Team: Added new features to the iOS app.",
+				].join("\n"))
 		)
-		.format(
-			v.object({
-				title: v.string("Title of the project thread"),
-				about: v.string("About the project"),
-				status: v.string("Current status of the project"),
-				updates: v.array(
-					v.object({
-						date: v.string("Date of the update"),
-						summary: v.string("Summary of the update"),
-					}),
-				),
-				summary: v.string(
-					"Extract the Update Summary text",
-				),
-			}),
-		)
-		.process();
+		.prompt((p) =>
+			p
+				.setLabel("Project Summary")
+				.saveAs("project_summary")
+				.incognito()
+				.prompt([
+					"Create a high-level summary of the project's progress.",
+					"1. Review all updates and summarize in 1-2 sentences.",
+					"2. Start directly with the main information; avoid introductory phrases.",
+					"3. Focus on significant user-facing updates and current state.",
+				])
+				.section("about_project", "{{project_info}}")
+				.section("project_updates", "{{project_update_summary}}")
+				.section("example",
+					[
+						"Final visual adjustments are pending.",
+						"Implemented core features and user testing is scheduled for next month."
+					]
+				)
+		);
+
+	await thread.process();
+
+	const projectInfo = await thread.getFormattedArtifact("project_info", v.object({
+		title: v.string("Title of the project thread"),
+		status: v.string("Current status of the project"),
+		about: v.string("About the project"),
+	}));
+
+	const projectUpdates = await thread.getFormattedArtifact("project_update_summary", v.array(
+		v.object({
+			date: v.string("Date of the update"),
+			summary: v.string("Summary of the update"),
+		}),
+	));
+
+	const projectSummary = await thread.getArtifact("project_summary");
+
 	return {
-		...thread,
-		ai: result,
+		...projectThread,
+		ai: {
+			...projectInfo,
+			updates: projectUpdates,
+			summary: projectSummary,
+		},
 	};
 }
 
