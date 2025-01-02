@@ -130,7 +130,16 @@ async function summarizeSingleProjectThread(
 	// Start with a clean thread for initial summary
 	const summarizer = openai("smart")
 		.insert("project_thread", threadXml)
-		.insert("project_thread_comments", commentsXml);
+		.insert("project_thread_comments", commentsXml)
+		.insert("writing_rules", [
+			"Prioritize user facing changes and current state of the project",
+			"Avoid introductory phrases",
+			"Avoid including engineering work specific details unless they're mission critical to user facing changes:",
+			"  - Pull Request merge status",
+			"  - Pull Request dates",
+			"  - Pull Request numbers",
+			"Avoid including engineering jargon"
+		].join("\n"));
 
 	// Initial prompts for basic information
 	summarizer.prompt((p) =>
@@ -192,6 +201,7 @@ async function summarizeSingleProjectThread(
 			])
 			.section("about_project", "{{project_info}}")
 			.section("project_updates", "{{project_update_summary}}")
+			.section("writing_rules", '{{writing_rules}}')
 			.section("example", [
 				"Final visual adjustments are pending.",
 				"Implemented core features and user testing is scheduled for next month.",
@@ -199,14 +209,6 @@ async function summarizeSingleProjectThread(
 	);
 
 	await summarizer.process();
-
-	// Get the initial summaries
-	const projectInfo = await summarizer.getFormattedArtifact("project_info", v.object({
-		title: v.string("Title of the project thread"),
-		status: v.string("Current status of the project"),
-		about: v.string("About the project"),
-	}));
-
 
 	const projectSummary = summarizer.getArtifact<string>("project_summary");
 
@@ -228,19 +230,19 @@ async function summarizeSingleProjectThread(
 	if (review.needsUpdate && review.suggestions && review.suggestions.length > 0) {
 		summarizer.prompt((p) =>
 			p
-				.setLabel("Update Summary")
+				.setLabel("Project Summary rewrite")
 				.saveAs("project_summary")
 				.prompt([
 					"That's a really good review, I like the format and style of the summary!",
 					"We've cross-checked the summary with information from pull requests and added a few suggestions.",
-					"Please update the summary to incorporate the suggested changes.",
 					"",
 					"As a reminder, this summary is supposed to be 1-2 sentences that cover user facing changes and current state of the project",
-					"Avoid introductory phrases, and don't engineering work specific details like merge status, dates, etc., unless they're mission critical to user facing changes.",
+					"Please use the provided suggestions below to improve the summary.",
 					"Keep in mind that the suggestions are just suggestions. You should incoorporate the helpful information and ignore the unhelpful/misguided information.",
 				])
-				.section("suggestions", review.suggestions)
+				.section("writing_rules", '{{writing_rules}}')
 				.section("current_summary", "{{project_summary}}")
+				.section("suggestions", review.suggestions)
 		);
 
 		await summarizer.process();
@@ -250,24 +252,13 @@ async function summarizeSingleProjectThread(
 	const finalProjectInfo = await summarizer.getFormattedArtifact("project_info", v.object({
 		title: v.string("Title of the project thread"),
 		status: v.string("Current status of the project"),
-		about: v.string("About the project"),
 	}));
-
-	const finalProjectUpdates = await summarizer.getFormattedArtifact("project_update_summary", v.array(
-		v.object({
-			date: v.string("Date of the update"),
-			summary: v.string("Summary of the update"),
-		}),
-	));
-
-	const finalProjectSummary = (await summarizer.getArtifact("project_summary")) as string;
 
 	return {
 		...projectThread,
 		ai: {
 			...finalProjectInfo,
-			updates: finalProjectUpdates,
-			summary: finalProjectSummary,
+			summary: summarizer.getArtifact("project_summary"),
 		},
 	};
 }
