@@ -6,9 +6,9 @@ export type ProgressStep = {
   isComplete?: boolean;
 };
 
-export type TeamName = "Android" | "iOS" | "Web" | "Backend";
+export type TeamName = "Android" | "iOS" | "Web" | "Server";
 
 export interface GithubSummary {
   reportContent: string;
   pullRequests: any[]; // Keeping the existing type for now
-} 
+}

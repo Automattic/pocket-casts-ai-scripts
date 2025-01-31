@@ -7,7 +7,7 @@ export const repositorySources: Record<string, string[]> = {
 		"https://github.com/Automattic/pocket-casts-paid-placements",
 		"https://github.com/a8cteam51/pocket-casts-main",
 	],
-	Backend: [
+	Server: [
 		"https://github.com/Automattic/pocket-casts-sync-api",
 		"https://github.com/Automattic/pocket-casts-node-server",
 		"https://github.com/Automattic/pocket-casts-sync-analytics",
